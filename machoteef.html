@@ -1,0 +1,1690 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Urgencias — Machote (Workbench)</title>
+  <style>
+    :root{
+      --bg: #0b0d12;
+      --panel:#121521;
+      --panel2:#0f1220;
+      --text:#e8ebf2;
+      --muted:#a7afc0;
+      --line: rgba(255,255,255,.12);
+      --brand:#6ee7ff;
+      --ok:#7CFFB2;
+      --warn:#ffd37c;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      color-scheme: dark;
+    }
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg:#f6f7fb; --panel:#ffffff; --panel2:#fbfbff; --text:#141722; --muted:#5a647a;
+        --line: rgba(20,23,34,.12); --brand:#0066ff; --shadow: 0 10px 30px rgba(10,20,40,.10);
+        color-scheme: light;
+      }
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 700px at 15% -10%, rgba(110,231,255,.18), transparent 60%),
+                  radial-gradient(900px 600px at 90% 0%, rgba(0,102,255,.14), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+    }
+    header{
+      position: sticky; top:0; z-index:50;
+      backdrop-filter: blur(14px);
+      background: linear-gradient(to bottom, rgba(18,21,33,.80), rgba(18,21,33,.55));
+      border-bottom: 1px solid var(--line);
+    }
+    .topbar{
+      max-width: 1250px; margin:0 auto; padding:14px 16px;
+      display:flex; gap:12px; align-items:center; justify-content:space-between;
+    }
+    .brand{
+      display:flex; gap:10px; align-items:center;
+    }
+    .logo{
+      width:34px; height:34px; border-radius:12px;
+      background: linear-gradient(135deg, rgba(110,231,255,.9), rgba(0,102,255,.7));
+      box-shadow: var(--shadow);
+    }
+    .brand h1{ margin:0; font-size:16px; letter-spacing:.2px; }
+    .brand .sub{ font-size:12px; color:var(--muted); margin-top:2px; }
+    .controls{
+      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+    }
+
+    /* Layout */
+    .wrap{
+      max-width: 1250px; margin:0 auto; padding:16px;
+      display:grid; grid-template-columns: 300px 1fr; gap:14px;
+    }
+    @media (max-width: 980px){
+      .wrap{ grid-template-columns: 1fr; }
+      .sidebar{ position: static !important; }
+    }
+
+    /* Sidebar */
+    .sidebar{
+      position: sticky; top: 76px; align-self: start;
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border-radius:16px; padding:14px; box-shadow: var(--shadow);
+    }
+    .side-title{ font-size:13px; color:var(--muted); margin:0 0 8px; }
+    .nav{
+      display:flex; flex-direction:column; gap:6px;
+    }
+    .nav a{
+      text-decoration:none; color:var(--text);
+      padding:10px 10px; border-radius:12px; border:1px solid transparent;
+      background: rgba(255,255,255,.03);
+    }
+    .nav a:hover{ border-color: var(--line); background: rgba(255,255,255,.06); }
+    .hint{
+      margin-top:12px; padding:10px; border-radius:12px;
+      border:1px dashed var(--line); color:var(--muted); font-size:12px;
+    }
+
+    /* Cards */
+    .card{
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border-radius:18px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card-head{
+      padding:14px 14px 10px;
+      display:flex; gap:10px; justify-content:space-between; align-items:flex-start;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255,255,255,.02);
+    }
+    .card-head h2{ margin:0; font-size:15px; }
+    .card-head .meta{ margin-top:4px; font-size:12px; color:var(--muted); }
+    .card-body{ padding:14px; display:grid; grid-template-columns: 1fr 360px; gap:14px; }
+    @media (max-width: 1100px){
+      .card-body{ grid-template-columns: 1fr; }
+    }
+
+    /* Fields */
+    .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+    @media (max-width: 650px){ .grid2{ grid-template-columns: 1fr; } }
+    .field{ display:flex; flex-direction:column; gap:6px; }
+    .field label{ font-size:12px; color:var(--muted); }
+    input[type="text"], textarea, select{
+      width:100%;
+      padding:10px 10px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      color: var(--text);
+      outline: none;
+    }
+    textarea{ min-height: 80px; resize: vertical; }
+    .inline{
+      display:flex; flex-wrap:wrap; gap:10px; align-items:center;
+      padding:10px; border:1px solid var(--line); border-radius:12px;
+      background: rgba(255,255,255,.02);
+    }
+    .inline label{ display:inline-flex; gap:8px; align-items:center; font-size:12px; color:var(--text); }
+    input[type="checkbox"]{ transform: translateY(1px); }
+
+    /* Buttons */
+    .btnbar{ display:flex; gap:10px; flex-wrap:wrap; }
+    button{
+      padding:10px 12px; border-radius:12px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      cursor:pointer;
+    }
+    button:hover{ filter: brightness(1.08); }
+    .primary{
+      border-color: rgba(110,231,255,.45);
+      background: linear-gradient(135deg, rgba(110,231,255,.25), rgba(0,102,255,.18));
+    }
+    .ok{ border-color: rgba(124,255,178,.35); background: rgba(124,255,178,.10); }
+    .warn{ border-color: rgba(255,211,124,.35); background: rgba(255,211,124,.10); }
+
+    /* Preview */
+    .preview{
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:12px;
+      background: rgba(0,0,0,.18);
+      display:flex; flex-direction:column; gap:10px;
+    }
+    .preview .title{
+      display:flex; justify-content:space-between; align-items:center; gap:8px;
+      font-size:12px; color:var(--muted);
+    }
+    .out{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      white-space: pre-wrap;
+      font-size: 12.5px;
+      line-height: 1.35;
+    }
+    .toast{
+      position: fixed; right: 14px; bottom: 14px; z-index: 100;
+      background: rgba(20,24,36,.92);
+      border:1px solid var(--line);
+      padding:10px 12px; border-radius:12px;
+      box-shadow: var(--shadow);
+      color: var(--text);
+      display:none;
+      font-size: 13px;
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo"></div>
+      <div>
+        <h1>Machote Urgencias</h1>
+        <div class="sub">Workbench clínico — cada sección genera texto y se copia por separado</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="field" style="min-width:180px;">
+        <label for="sexo">Sexo global</label>
+        <select id="sexo">
+          <option value="M">Hombre</option>
+          <option value="F">Mujer</option>
+        </select>
+      </div>
+
+      <button class="primary" type="button" id="btnNormalGlobal">Normal global</button>
+      <button type="button" id="btnCopiarTodo">Copiar TODO EF</button>
+      <button class="warn" type="button" id="btnReset">Reset</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="side-title">Navegación</div>
+    <nav class="nav">
+      <a href="#habitus">Habitus exterior</a>
+      <a href="#cabeza">Cabeza</a>
+      <a href="#cuello">Cuello</a>
+      <a href="#torax">Tórax</a>
+      <a href="#abdomen">Abdomen</a>
+      <a href="#extremidades">Extremidades</a>
+      <a href="#neuro">Neurológico</a>
+    </nav>
+    <div class="hint">
+      Tips rápidos:
+      <ul style="margin:8px 0 0; padding-left:18px;">
+        <li>Usa “Normal” por tarjeta y luego ajusta.</li>
+        <li>“Copiar” copia solo esa sección.</li>
+        <li>Sexo global cambia concordancias.</li>
+      </ul>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main style="display:flex; flex-direction:column; gap:14px;">
+
+    <!-- HABITUS -->
+    <section id="habitus" class="card">
+      <div class="card-head">
+        <div>
+          <h2>Habitus exterior</h2>
+          <div class="meta">Texto en una sola línea. Campos con sugerencias y “Todo normal”.</div>
+        </div>
+        <div class="btnbar">
+          <button class="ok" type="button" id="hab_normal">Normal</button>
+          <button type="button" id="hab_clear">Limpiar</button>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <div>
+          <div class="grid2">
+            <div class="field">
+              <label>Edad vs cronológica</label>
+              <select id="hab_edad">
+                <option value="similar">de edad aparente similar a la cronológica</option>
+                <option value="mayor">de edad aparente mayor a la cronológica</option>
+                <option value="menor">de edad aparente menor a la cronológica</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Alerta</label>
+              <select id="hab_alerta">
+                <option value="alerta">alerta</option>
+                <option value="no_alerta">no alerta</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Estado de conciencia</label>
+              <select id="hab_conc">
+                <option value="despierto">despiert@</option>
+                <option value="soporoso">soporos@ (responde a estímulos verbales)</option>
+                <option value="estuporoso">estuporos@ (responde a estímulos físicos)</option>
+                <option value="comatoso">comatos@ (no responde a estímulos)</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Orientación</label>
+              <select id="hab_ori_modo">
+                <option value="4">orientad@ en tiempo, lugar, persona y circunstancia</option>
+                <option value="3">orientad@ en 3 esferas (elige cuáles)</option>
+                <option value="2">orientad@ en 2 esferas (elige cuáles)</option>
+                <option value="1">orientad@ en 1 esfera (elige cuál)</option>
+                <option value="0">no orientad@</option>
+                <option value="nv">esferas no valorables</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field" style="margin-top:10px;">
+            <label>Esferas (solo si eliges 3/2/1)</label>
+            <div class="inline" id="hab_ori_checks">
+              <label><input type="checkbox" class="hab_ori" value="tiempo" checked> tiempo</label>
+              <label><input type="checkbox" class="hab_ori" value="lugar" checked> lugar</label>
+              <label><input type="checkbox" class="hab_ori" value="persona" checked> persona</label>
+              <label><input type="checkbox" class="hab_ori" value="circunstancia" checked> circunstancia</label>
+            </div>
+          </div>
+
+          <div class="grid2" style="margin-top:10px;">
+            <div class="field">
+              <label>Posición</label>
+              <select id="hab_pos">
+                <option value="decubito_supino">en decúbito supino</option>
+                <option value="acostado">acostad@</option>
+                <option value="sentado">sentad@</option>
+                <option value="de_pie">de pie</option>
+                <option value="postrado">postrad@</option>
+                <option value="libre">en posición libremente escogida</option>
+                <option value="forzada">en posición forzada</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Cooperación</label>
+              <select id="hab_coop">
+                <option value="cooperador">cooperador@</option>
+                <option value="no_cooperador">no cooperador@</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Facies (opcional)</label>
+              <input id="hab_facies" list="dl_facies" type="text" placeholder="Deja vacío para ‘sin facies’">
+              <datalist id="dl_facies">
+                <option value="facies álgica"></option>
+                <option value="facies de Cushing (luna llena)"></option>
+                <option value="facies trágica (hipertiroidismo con exoftalmos)"></option>
+                <option value="facies acromegálica"></option>
+                <option value="facies leonina (lepra)"></option>
+                <option value="facies hipocrática"></option>
+                <option value="facies inexpresiva (extrapiramidal)"></option>
+                <option value="facies lúpica (eritema en mariposa)"></option>
+                <option value="facies urémica"></option>
+                <option value="facies abotagada (obesidad / SAOS)"></option>
+                <option value="soplador rosado (enfisema)"></option>
+              </datalist>
+            </div>
+
+            <div class="field">
+              <label>Integridad</label>
+              <select id="hab_integ">
+                <option value="integro">íntegr@</option>
+                <option value="no_integro">no ínteg@ (especificar)</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Motivo (si no íntegro)</label>
+              <input id="hab_integ_txt" type="text" placeholder="Ej. heridas, sangrado, etc.">
+            </div>
+
+            <div class="field">
+              <label>Conformación</label>
+              <select id="hab_conf">
+                <option value="bien">bien conformad@</option>
+                <option value="mal">mal conformad@ a expensas de…</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Especificar conformación</label>
+              <input id="hab_conf_txt" type="text" placeholder="Ej. aumento en volumen abdominal…">
+            </div>
+
+            <div class="field">
+              <label>Complexión</label>
+              <select id="hab_comp">
+                <option value="media">complexión media</option>
+                <option value="robusta">complexión robusta</option>
+                <option value="delgada">complexión delgada</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Sheldon</label>
+              <select id="hab_sheldon">
+                <option value="meso">mesomórfic@</option>
+                <option value="ecto">ectomórfic@</option>
+                <option value="endo">endomórfic@</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Olores (opcional)</label>
+              <input id="hab_olores" list="dl_olores" type="text" placeholder="Deja vacío para ‘sin olores anormales’">
+              <datalist id="dl_olores">
+                <option value="aliento urémico (insuficiencia renal)"></option>
+                <option value="hedor hepático (insuficiencia hepática)"></option>
+                <option value="aliento cetónico (cetoacidosis diabética)"></option>
+                <option value="halitosis (mal aseo dental)"></option>
+                <option value="mal olor (inadecuado aseo)"></option>
+                <option value="olor a “animal muerto” (necrosis)"></option>
+              </datalist>
+            </div>
+
+            <div class="field">
+              <label>Movimientos anormales (opcional)</label>
+              <input id="hab_mov" list="dl_mov" type="text" placeholder="Deja vacío para ‘sin movimientos anormales’">
+              <datalist id="dl_mov">
+                <option value="tics"></option><option value="temblores"></option><option value="coreiformes"></option>
+                <option value="mioclonías"></option><option value="crisis convulsivas"></option><option value="clonus"></option>
+                <option value="acatisia"></option><option value="balismo"></option><option value="corea"></option>
+              </datalist>
+            </div>
+
+            <div class="field">
+              <label>Marcha (opcional)</label>
+              <input id="hab_marcha" list="dl_marcha" type="text" placeholder="Deja vacío para ‘marcha sin alteraciones’">
+              <datalist id="dl_marcha">
+                <option value="atáxica (lesión cerebelosa/alcohol)"></option>
+                <option value="neuropática o ‘caballito de las estepas’ (pie caído)"></option>
+                <option value="helicópoda o de segadora (hemiparesia)"></option>
+                <option value="claudicante (insuficiencia arterial/acortamiento)"></option>
+                <option value="propulsiva o festinante (Parkinson)"></option>
+                <option value="anteropulsión (alteración vestibular)"></option>
+              </datalist>
+            </div>
+
+            <div class="field">
+              <label>Entorno / Dispositivos (opcional)</label>
+              <input id="hab_disp" type="text" placeholder="Ej. mascarilla O2, venoclisis ESI, monitor…">
+            </div>
+          </div>
+        </div>
+
+        <div class="preview">
+          <div class="title">
+            <span>Texto final — Habitus</span>
+            <div class="btnbar">
+              <button class="primary" type="button" data-copy="hab_out">Copiar</button>
+            </div>
+          </div>
+          <div id="hab_out" class="out"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CABEZA -->
+    <section id="cabeza" class="card">
+      <div class="card-head">
+        <div>
+          <h2>Cabeza</h2>
+          <div class="meta">Estructura modular con “otro (especificar)”.</div>
+        </div>
+        <div class="btnbar">
+          <button class="ok" type="button" id="cab_normal">Normal</button>
+          <button type="button" id="cab_clear">Limpiar</button>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <div>
+          <div class="grid2">
+            <div class="field">
+              <label>Cráneo</label>
+              <select id="cab_craneo">
+                <option value="normoc">normocéfalo</option>
+                <option value="meso">mesocéfalo</option>
+                <option value="dolico">dolicocéfalo</option>
+                <option value="braqui">braquicéfalo</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Extras (opcional)</label>
+              <input id="cab_extra" list="dl_craneo_extra" type="text" placeholder="cicatrices, lesiones, alopecia…">
+              <datalist id="dl_craneo_extra">
+                <option value="con cicatrices"></option>
+                <option value="higiene adecuada"></option>
+                <option value="con lesiones"></option>
+                <option value="alopecia"></option>
+              </datalist>
+            </div>
+
+            <div class="field">
+              <label>A la palpación</label>
+              <select id="cab_palp">
+                <option value="normal">no se perciben salientes ni hundimientos anormales</option>
+                <option value="anormal">se perciben (especificar)</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Especificar palpación</label>
+              <input id="cab_palp_txt" type="text" placeholder="Ej. hematoma, hundimiento, etc.">
+            </div>
+
+            <div class="field">
+              <label>Cabello (implantación)</label>
+              <select id="cab_impl">
+                <option value="buena">buena implantación</option>
+                <option value="mala">mala implantación</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Cabello</label>
+              <select id="cab_despr">
+                <option value="dif">difícilmente desprendible</option>
+                <option value="desp">desprendible</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Dolor</label>
+              <select id="cab_dolor">
+                <option value="no">sin dolor</option>
+                <option value="si">con dolor (especificar)</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Especificar dolor</label>
+              <input id="cab_dolor_txt" type="text" placeholder="Ej. dolor a palpación parietal derecha">
+            </div>
+
+            <div class="field">
+              <label>Ojos</label>
+              <select id="cab_ojos">
+                <option value="sim">simétricos</option>
+                <option value="asim">asimétricos (especificar)</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Especificar ojos</label>
+              <input id="cab_ojos_txt" type="text" placeholder="Ej. equimosis periorbitaria, edema palpebral…">
+            </div>
+
+            <div class="field">
+              <label>Pupilas</label>
+              <select id="cab_pup">
+                <option value="iso_normo">isocóricas y normoreflécticas</option>
+                <option value="iso">isocóricas</option>
+                <option value="otro">otro (especificar)</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Especificar pupilas</label>
+              <input id="cab_pup_txt" type="text" placeholder="Ej. midriáticas, arrefléctica…">
+            </div>
+
+            <div class="field">
+              <label>Oído/narinas</label>
+              <select id="cab_cond">
+                <option value="per">conducto auditivo y narinas permeables</option>
+                <option value="otro">otro (especificar)</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Especificar oído/narinas</label>
+              <input id="cab_cond_txt" type="text" placeholder="Ej. otorragia OD, rinorrea…">
+            </div>
+
+            <div class="field">
+              <label>Mucosa oral</label>
+              <select id="cab_muc">
+                <option value="bien">bien hidratada</option>
+                <option value="pal_desh">pálida y deshidratada</option>
+                <option value="desh">deshidratada</option>
+                <option value="otra">otra (especificar)</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Especificar mucosa</label>
+              <input id="cab_muc_txt" type="text" placeholder="Ej. ictérica, lesiones, etc.">
+            </div>
+
+            <div class="field">
+              <label>Orofaringe (color)</label>
+              <select id="cab_oro_color">
+                <option value="normo">normocrómica</option>
+                <option value="hiper">hipercrómica</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Amígdalas</label>
+              <select id="cab_amig">
+                <option value="sin">sin hipertrofia</option>
+                <option value="con">con hipertrofia (grado)</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Grado</label>
+              <input id="cab_amig_grado" type="text" placeholder="1–4">
+            </div>
+
+            <div class="field">
+              <label>Descarga / placas</label>
+              <select id="cab_desc">
+                <option value="sin_desc">sin descarga posterior</option>
+                <option value="sin">sin descarga posterior ni placas serosas</option>
+                <option value="con">con (especificar)</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Especificar descarga</label>
+              <input id="cab_desc_txt" type="text" placeholder="Ej. placas serosas, exudado…">
+            </div>
+          </div>
+        </div>
+
+        <div class="preview">
+          <div class="title">
+            <span>Texto final — Cabeza</span>
+            <div class="btnbar">
+              <button class="primary" type="button" data-copy="cab_out">Copiar</button>
+            </div>
+          </div>
+          <div id="cab_out" class="out"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CUELLO -->
+    <section id="cuello" class="card">
+      <div class="card-head">
+        <div>
+          <h2>Cuello</h2>
+          <div class="meta">Plantilla compacta con “normal” o “con (texto)”.</div>
+        </div>
+        <div class="btnbar">
+          <button class="ok" type="button" id="cue_normal">Normal</button>
+          <button type="button" id="cue_clear">Limpiar</button>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <div>
+          <div class="grid2">
+            <div class="field">
+              <label>Forma</label>
+              <select id="cue_forma">
+                <option value="cil">cilíndrico</option>
+                <option value="largo">largo y estrecho</option>
+                <option value="corto">corto y ancho</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Biotipo</label>
+              <select id="cue_bio">
+                <option value="normo">normolíneo</option>
+                <option value="longi">longilíneo</option>
+                <option value="brevi">brevilíneo</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Simetría</label>
+              <select id="cue_sim">
+                <option value="sim">simétrico</option>
+                <option value="asim">asimétrico</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Hallazgos</label>
+              <select id="cue_find">
+                <option value="normal">sin adenomegalias palpables, sin plétora yugular ni deformidades</option>
+                <option value="otro">con (especificar)</option>
+              </select>
+            </div>
+            <div class="field" style="grid-column:1/-1;">
+              <label>Especificar hallazgos</label>
+              <input id="cue_txt" type="text" placeholder="Ej. masa palpable izquierda, deformidad…">
+            </div>
+          </div>
+        </div>
+
+        <div class="preview">
+          <div class="title">
+            <span>Texto final — Cuello</span>
+            <div class="btnbar">
+              <button class="primary" type="button" data-copy="cue_out">Copiar</button>
+            </div>
+          </div>
+          <div id="cue_out" class="out"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TÓRAX -->
+    <section id="torax" class="card">
+      <div class="card-head">
+        <div>
+          <h2>Tórax</h2>
+          <div class="meta">Incluye presets de síndromes para autollenar campos.</div>
+        </div>
+        <div class="btnbar">
+          <button class="ok" type="button" id="tor_normal">Normal</button>
+          <button type="button" id="tor_cond">Síndrome: Condensación</button>
+          <button type="button" id="tor_abol">Síndrome: MV abolido</button>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <div>
+          <div class="grid2">
+            <div class="field">
+              <label>Ritmo</label>
+              <select id="tor_ritmo">
+                <option value="rit">rítmicos</option>
+                <option value="arrit">arrítmicos</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Intensidad</label>
+              <select id="tor_int">
+                <option value="ade">adecuada</option>
+                <option value="dis">disminuida</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Frecuencia</label>
+              <select id="tor_freq">
+                <option value="ade">adecuada</option>
+                <option value="alt">alterada</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Soplos</label>
+              <select id="tor_sop">
+                <option value="sin">sin soplos</option>
+                <option value="con">con soplo (especificar)</option>
+              </select>
+            </div>
+            <div class="field" style="grid-column:1/-1;">
+              <label>Especificar soplo</label>
+              <input id="tor_sop_txt" type="text" placeholder="Ej. sistólico foco mitral…">
+            </div>
+
+            <div class="field">
+              <label>Amplexión/amplexación</label>
+              <select id="tor_amp">
+                <option value="ade">adecuados</option>
+                <option value="dis">disminución</option>
+                <option value="aum">aumento</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Murmullo vesicular</label>
+              <select id="tor_mv">
+                <option value="norm">generalizado (normal)</option>
+                <option value="dis">disminuido</option>
+                <option value="abol">abolido</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Fenómenos agregados</label>
+              <select id="tor_fen">
+                <option value="sin">sin fenómenos agregados</option>
+                <option value="con">con (especificar)</option>
+              </select>
+            </div>
+
+            <div class="field" style="grid-column:1/-1;">
+              <label>Especificar fenómenos</label>
+              <input id="tor_fen_txt" type="text" placeholder="Ej. estertores, sibilancias, roncus…">
+            </div>
+
+            <div class="field">
+              <label>Síndrome pleuropulmonar</label>
+              <select id="tor_spp">
+                <option value="no">no se integró</option>
+                <option value="si">se integra (especificar)</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Tipo</label>
+              <input id="tor_spp_txt" type="text" placeholder="Ej. condensación, derrame, neumotórax…">
+            </div>
+          </div>
+        </div>
+
+        <div class="preview">
+          <div class="title">
+            <span>Texto final — Tórax</span>
+            <div class="btnbar">
+              <button class="primary" type="button" data-copy="tor_out">Copiar</button>
+            </div>
+          </div>
+          <div id="tor_out" class="out"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ABDOMEN -->
+    <section id="abdomen" class="card">
+      <div class="card-head">
+        <div>
+          <h2>Abdomen</h2>
+          <div class="meta">Incluye síndromes (apendicitis/colecistitis/diverticulitis/colostomía).</div>
+        </div>
+        <div class="btnbar">
+          <button class="ok" type="button" id="abd_normal">Normal</button>
+          <button type="button" id="abd_colost">Colostomía</button>
+          <button type="button" id="abd_ap">Apendicitis</button>
+          <button type="button" id="abd_col">Colecistitis</button>
+          <button type="button" id="abd_div">Diverticulitis</button>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <div>
+          <div class="grid2">
+            <div class="field">
+              <label>Forma</label>
+              <select id="abd_forma">
+                <option value="plano">plano</option>
+                <option value="pan">globoso a expensas de panículo adiposo</option>
+                <option value="dist">globoso a expensas de distensión</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Consistencia</label>
+              <select id="abd_cons">
+                <option value="blando">blando</option>
+                <option value="distendido">distendido</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Depresibilidad</label>
+              <select id="abd_depr">
+                <option value="dep">depresible</option>
+                <option value="res">depresible con resistencia</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Peristalsis</label>
+              <select id="abd_per">
+                <option value="normo">normoactiva</option>
+                <option value="hipo">hipoactiva</option>
+                <option value="hiper">hiperactiva</option>
+                <option value="lig">ligeramente hiperactiva</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Dolor</label>
+              <select id="abd_dolor">
+                <option value="no">no doloroso</option>
+                <option value="si">doloroso</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Palpación</label>
+              <select id="abd_pal">
+                <option value="sup_prof">superficial o profunda</option>
+                <option value="sup">superficial</option>
+                <option value="prof">profunda</option>
+                <option value="ambas">superficial y profunda</option>
+              </select>
+            </div>
+
+            <div class="field" style="grid-column:1/-1;">
+              <label>Localización (si hay dolor, opcional)</label>
+              <input id="abd_loc" list="dl_abd_loc" type="text" placeholder="epigastrio, mesogastrio, FID…">
+              <datalist id="dl_abd_loc">
+                <option value="epigastrio"></option><option value="mesogastrio"></option><option value="hipogastrio"></option>
+                <option value="flanco derecho"></option><option value="flanco izquierdo"></option>
+                <option value="fosa ilíaca derecha"></option><option value="fosa ilíaca izquierda"></option>
+                <option value="hipocondrio derecho"></option><option value="hipocondrio izquierdo"></option>
+                <option value="marco cólico"></option>
+              </datalist>
+            </div>
+
+            <div class="field">
+              <label>Percusión</label>
+              <select id="abd_perc">
+                <option value="timp">timpánico</option>
+                <option value="mate">mate</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Irritación peritoneal</label>
+              <select id="abd_irr">
+                <option value="sin">sin datos</option>
+                <option value="con">con datos</option>
+              </select>
+            </div>
+
+            <div class="field" style="grid-column:1/-1;">
+              <label>Signos extra</label>
+              <div class="inline">
+                <label>Murphy
+                  <select id="abd_mur">
+                    <option value="omit">—</option>
+                    <option value="neg">negativo</option>
+                    <option value="pos">positivo</option>
+                  </select>
+                </label>
+                <label>Giordano
+                  <select id="abd_gio">
+                    <option value="omit">—</option>
+                    <option value="neg">negativo</option>
+                    <option value="pos">positivo</option>
+                    <option value="pos_bi">positivo bilateral</option>
+                  </select>
+                </label>
+                <label>McBurney
+                  <select id="abd_mcb">
+                    <option value="omit">—</option>
+                    <option value="neg">negativo</option>
+                    <option value="pos">positivo</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            <div class="field" style="grid-column:1/-1;">
+              <label>Extras (hernias, colostomía, puntos ureterales, Blumberg…)</label>
+              <textarea id="abd_extra" placeholder="(opcional)"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="preview">
+          <div class="title">
+            <span>Texto final — Abdomen</span>
+            <div class="btnbar">
+              <button class="primary" type="button" data-copy="abd_out">Copiar</button>
+            </div>
+          </div>
+          <div id="abd_out" class="out"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- EXTREMIDADES -->
+    <section id="extremidades" class="card">
+      <div class="card-head">
+        <div>
+          <h2>Extremidades</h2>
+          <div class="meta">Plantilla rápida con alteraciones y dolor/localización.</div>
+        </div>
+        <div class="btnbar">
+          <button class="ok" type="button" id="ext_normal">Normal</button>
+          <button type="button" id="ext_clear">Limpiar</button>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <div>
+          <div class="grid2">
+            <div class="field">
+              <label>Segmento</label>
+              <select id="ext_seg">
+                <option value="sup_inf">superiores e inferiores</option>
+                <option value="sup">superiores</option>
+                <option value="inf">inferiores</option>
+                <option value="sup_inf_der">superiores e inferior derecha</option>
+                <option value="sup_inf_izq">superiores e inferior izquierda</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Integridad</label>
+              <select id="ext_integ">
+                <option value="integ">íntegras, sin alteraciones</option>
+                <option value="alter">con alteraciones (especificar)</option>
+              </select>
+            </div>
+
+            <div class="field" style="grid-column:1/-1;">
+              <label>Especificar alteraciones</label>
+              <input id="ext_integ_txt" type="text" placeholder="Ej. mordedura, laceración, aumento de volumen…">
+            </div>
+
+            <div class="field">
+              <label>Troficidad</label>
+              <select id="ext_trof">
+                <option value="eut">eutróficas</option>
+                <option value="atr">atróficas</option>
+                <option value="hip">hipertróficas</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Temperatura</label>
+              <select id="ext_temp">
+                <option value="eut">eutérmicas</option>
+                <option value="hipo">hipotérmicas</option>
+                <option value="hiper">hipertermicas</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Edema</label>
+              <select id="ext_edema">
+                <option value="sin">sin edema</option>
+                <option value="con">con edema</option>
+                <option value="g1">Godet +</option>
+                <option value="g2">Godet ++</option>
+                <option value="g3">Godet +++</option>
+                <option value="g4">Godet ++++</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Eritema</label>
+              <select id="ext_eri">
+                <option value="no">sin eritema</option>
+                <option value="si">con eritema</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Aumento de volumen</label>
+              <select id="ext_vol">
+                <option value="no">sin aumento de volumen</option>
+                <option value="si">con aumento de volumen</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Dolor</label>
+              <select id="ext_dolor">
+                <option value="no">sin dolor</option>
+                <option value="si">con dolor</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Tipo palpación</label>
+              <select id="ext_dolor_tipo">
+                <option value="sup">superficial</option>
+                <option value="prof">profunda</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Si dolor</label>
+              <select id="ext_dolor_mov">
+                <option value="omit">—</option>
+                <option value="mov">al movimiento</option>
+                <option value="elev">a la elevación de la extremidad</option>
+              </select>
+            </div>
+
+            <div class="field" style="grid-column:1/-1;">
+              <label>Localización</label>
+              <input id="ext_loc" type="text" placeholder="Ej. clavícula izquierda, bíceps femoral, muñeca…">
+            </div>
+          </div>
+        </div>
+
+        <div class="preview">
+          <div class="title">
+            <span>Texto final — Extremidades</span>
+            <div class="btnbar">
+              <button class="primary" type="button" data-copy="ext_out">Copiar</button>
+            </div>
+          </div>
+          <div id="ext_out" class="out"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- NEURO -->
+    <section id="neuro" class="card">
+      <div class="card-head">
+        <div>
+          <h2>Neurológico (pares craneales)</h2>
+          <div class="meta">Formato tipo “normal / otro (especificar)” por par + resto de examen.</div>
+        </div>
+        <div class="btnbar">
+          <button class="ok" type="button" id="neu_normal">Normal</button>
+          <button type="button" id="neu_clear">Limpiar</button>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <div>
+          <div class="grid2">
+            <div class="field"><label>II</label><select id="n2"><option value="normal">sin alteraciones</option><option value="otro">otro</option></select></div>
+            <div class="field"><label>II (texto)</label><input id="n2t" type="text" placeholder="Ej. disminución AV…"></div>
+
+            <div class="field"><label>III/IV/VI</label><select id="n346"><option value="normal">movimientos + reflejos conservados</option><option value="otro">otro</option></select></div>
+            <div class="field"><label>III/IV/VI (texto)</label><input id="n346t" type="text" placeholder="Ej. nistagmo…"></div>
+
+            <div class="field"><label>V</label><select id="n5"><option value="normal">sensibilidad/tono/fuerza conservados</option><option value="otro">otro</option></select></div>
+            <div class="field"><label>V (texto)</label><input id="n5t" type="text" placeholder=""></div>
+
+            <div class="field"><label>VII</label><select id="n7"><option value="normal">mímica simétrica</option><option value="otro">otro</option></select></div>
+            <div class="field"><label>VII (texto)</label><input id="n7t" type="text" placeholder="Ej. hipomotilidad hemicara…"></div>
+
+            <div class="field"><label>VIII</label><select id="n8"><option value="normal">audición conservada, sin nistagmus</option><option value="hipo">hipoacusia conocida</option><option value="otro">otro</option></select></div>
+            <div class="field"><label>VIII (texto)</label><input id="n8t" type="text" placeholder=""></div>
+
+            <div class="field"><label>IX/X</label><select id="n9"><option value="normal">úvula central, reflejo presente</option><option value="otro">otro</option></select></div>
+            <div class="field"><label>IX/X (texto)</label><input id="n9t" type="text" placeholder=""></div>
+
+            <div class="field"><label>XI</label><select id="n11"><option value="normal">fuerza ECM/trapecios adecuada</option><option value="otro">otro</option></select></div>
+            <div class="field"><label>XI (texto)</label><input id="n11t" type="text" placeholder=""></div>
+
+            <div class="field"><label>XII</label><select id="n12"><option value="normal">movimientos linguales conservados</option><option value="otro">otro</option></select></div>
+            <div class="field"><label>XII (texto)</label><input id="n12t" type="text" placeholder=""></div>
+
+            <div class="field"><label>Sensibilidad</label><select id="nsens"><option value="normal">conservada</option><option value="otro">otro</option></select></div>
+            <div class="field"><label>Sensibilidad (texto)</label><input id="nsenst" type="text" placeholder=""></div>
+
+            <div class="field"><label>Reflejos</label><select id="nref"><option value="normal">normales</option><option value="otro">otro</option></select></div>
+            <div class="field"><label>Reflejos (texto)</label><input id="nreft" type="text" placeholder=""></div>
+
+            <div class="field"><label>Coordinación</label><select id="ncoord"><option value="normal">sin dismetrías/diadococinesias</option><option value="otro">otro</option></select></div>
+            <div class="field"><label>Coordinación (texto)</label><input id="ncoordt" type="text" placeholder=""></div>
+
+            <div class="field"><label>Meningismo</label><select id="nmen"><option value="normal">sin datos</option><option value="otro">otro</option></select></div>
+            <div class="field"><label>Meningismo (texto)</label><input id="nment" type="text" placeholder=""></div>
+
+            <div class="field"><label>Marcha</label><select id="nmarch"><option value="normal">sin ataxia</option><option value="otro">otro</option></select></div>
+            <div class="field"><label>Marcha (texto)</label><input id="nmarcht" type="text" placeholder=""></div>
+          </div>
+        </div>
+
+        <div class="preview">
+          <div class="title">
+            <span>Texto final — Neurológico</span>
+            <div class="btnbar">
+              <button class="primary" type="button" data-copy="neu_out">Copiar</button>
+            </div>
+          </div>
+          <div id="neu_out" class="out"></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+  // ===== Helpers =====
+  const toast = (msg) => {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.style.display = "block";
+    clearTimeout(window.__toastTimer);
+    window.__toastTimer = setTimeout(()=> t.style.display="none", 1600);
+  };
+
+  const S = () => {
+    const sex = document.getElementById("sexo").value;
+    return {
+      sex,
+      paciente: sex === "F" ? "Paciente mujer" : "Paciente hombre",
+      adj: (raiz) => {
+        const base = raiz.replace("@","");
+        return sex === "F" ? base + "a" : base + "o";
+      },
+      despierto: (raiz) => {
+        const base = raiz.replace("@","");
+        return sex === "F" ? base + "a" : base + "o";
+      }
+    };
+  };
+
+  const setDisabled = (containerId, disabled) => {
+    const el = document.getElementById(containerId);
+    el.querySelectorAll("input, select, textarea, button").forEach(x => x.disabled = disabled);
+    el.style.opacity = disabled ? .55 : 1;
+  };
+
+  async function copyById(id){
+    const text = document.getElementById(id).textContent;
+    try { await navigator.clipboard.writeText(text); toast("Copiado ✅"); }
+    catch { toast("No se pudo copiar"); }
+  }
+
+  document.addEventListener("click", (e)=>{
+    const btn = e.target.closest("[data-copy]");
+    if(!btn) return;
+    copyById(btn.getAttribute("data-copy"));
+  });
+
+  // ===== Builders =====
+  function buildHabitus(){
+    const s = S();
+    const edad = document.getElementById("hab_edad").value;
+    const edadTxt = edad==="similar" ? "de edad aparente similar a la cronológica" : edad==="mayor" ? "de edad aparente mayor a la cronológica" : "de edad aparente menor a la cronológica";
+
+    const alerta = document.getElementById("hab_alerta").value === "alerta" ? "alerta" : "no alerta";
+
+    const conc = document.getElementById("hab_conc").value;
+    const concTxt =
+      conc==="despierto" ? s.despierto("despiert@") :
+      conc==="soporoso" ? s.despierto("soporos@") + " (responde a estímulos verbales)" :
+      conc==="estuporoso" ? s.despierto("estuporos@") + " (responde a estímulos físicos)" :
+      s.despierto("comatos@") + " (no responde a estímulos)";
+
+    const modo = document.getElementById("hab_ori_modo").value;
+    const oriChecks = Array.from(document.querySelectorAll(".hab_ori:checked")).map(x=>x.value);
+
+    const oriTexto = () => {
+      if (modo==="4") return s.adj("orientad@") + " en tiempo, lugar, persona y circunstancia";
+      if (modo==="0") return "no " + s.adj("orientad@");
+      if (modo==="nv") return "esferas de orientación no valorables";
+      const n = Number(modo);
+      const pick = oriChecks.slice(0,n);
+      return s.adj("orientad@") + " en " + (pick.length? pick.join(", ") : "—");
+    };
+
+    const pos = document.getElementById("hab_pos").value;
+    const posTxt = {
+      decubito_supino: "en decúbito supino",
+      acostado: s.despierto("acostad@"),
+      sentado: s.despierto("sentad@"),
+      de_pie: "de pie",
+      postrado: s.despierto("postrad@"),
+      libre: "en posición libremente escogida",
+      forzada: "en posición forzada"
+    }[pos] || "en decúbito supino";
+
+    const coop = document.getElementById("hab_coop").value==="cooperador" ? s.adj("cooperador@") : "no " + s.adj("cooperador@");
+
+    const facies = document.getElementById("hab_facies").value.trim();
+    const faciesTxt = facies ? facies : "sin facies";
+
+    const integ = document.getElementById("hab_integ").value;
+    const integTxt = integ==="integro" ? s.adj("íntegr@") :
+      ("no " + s.adj("íntegr@") + (document.getElementById("hab_integ_txt").value.trim() ? " por " + document.getElementById("hab_integ_txt").value.trim() : ""));
+
+    const conf = document.getElementById("hab_conf").value;
+    const confTxt = conf==="bien" ? ("bien " + s.adj("conformad@")) :
+      ("mal " + s.adj("conformad@") + " a expensas de " + (document.getElementById("hab_conf_txt").value.trim() || "—"));
+
+    const comp = document.getElementById("hab_comp").value;
+    const compTxt = comp==="robusta" ? "complexión robusta" : comp==="delgada" ? "complexión delgada" : "complexión media";
+
+    const sh = document.getElementById("hab_sheldon").value;
+    const shTxt = sh==="ecto" ? s.adj("ectomórfic@") : sh==="endo" ? s.adj("endomórfic@") : s.adj("mesomórfic@");
+
+    const olores = document.getElementById("hab_olores").value.trim();
+    const oloresTxt = olores ? olores : "sin olores anormales";
+
+    const mov = document.getElementById("hab_mov").value.trim();
+    const movTxt = mov ? mov : "sin movimientos anormales";
+
+    const marcha = document.getElementById("hab_marcha").value.trim();
+    const marchaTxt = marcha ? ("marcha " + marcha) : "marcha sin alteraciones";
+
+    const disp = document.getElementById("hab_disp").value.trim();
+    const dispTxt = disp ? (" " + disp + ".") : "";
+
+    return `Habitus exterior: ${s.paciente} ${edadTxt}, ${alerta}, ${concTxt}, ${oriTexto()}, ${coop}, ${posTxt}, ${faciesTxt}, ${integTxt}, ${confTxt}, ${compTxt}, ${shTxt}, ${oloresTxt}, ${movTxt}, ${marchaTxt}.${dispTxt}`;
+  }
+
+  function buildCabeza(){
+    const cran = document.getElementById("cab_craneo").value;
+    const cranTxt = cran==="normoc" ? "Cráneo normocéfalo" : cran==="meso" ? "Cráneo mesocéfalo" : cran==="dolico" ? "Cráneo dolicocéfalo" : "Cráneo braquicéfalo";
+    const extra = document.getElementById("cab_extra").value.trim();
+
+    const palp = document.getElementById("cab_palp").value==="normal"
+      ? "A la palpación no se perciben salientes ni hundimientos anormales"
+      : "A la palpación se perciben " + (document.getElementById("cab_palp_txt").value.trim() || "—");
+
+    const impl = document.getElementById("cab_impl").value==="buena" ? "cabello con buena implantación" : "cabello con mala implantación";
+    const despr = document.getElementById("cab_despr").value==="dif" ? "difícilmente desprendible" : "desprendible";
+
+    const dolor = document.getElementById("cab_dolor").value==="no" ? "sin dolor" : ("con dolor: " + (document.getElementById("cab_dolor_txt").value.trim() || "—"));
+
+    const ojos = document.getElementById("cab_ojos").value==="sim" ? "ojos simétricos" : ("ojos asimétricos: " + (document.getElementById("cab_ojos_txt").value.trim() || "—"));
+
+    const pup = document.getElementById("cab_pup").value;
+    const pupTxt = pup==="iso_normo" ? "pupilas isocóricas, normoreflécticas" :
+                   pup==="iso" ? "pupilas isocóricas" :
+                   "pupilas: " + (document.getElementById("cab_pup_txt").value.trim() || "—");
+
+    const cond = document.getElementById("cab_cond").value==="per" ? "conducto auditivo y narinas permeables" :
+                 (document.getElementById("cab_cond_txt").value.trim() || "conducto auditivo/narinas: —");
+
+    const muc = document.getElementById("cab_muc").value;
+    const mucTxt = muc==="bien" ? "mucosa oral bien hidratada" :
+                   muc==="pal_desh" ? "mucosa oral pálida y deshidratada" :
+                   muc==="desh" ? "mucosa oral deshidratada" :
+                   "mucosa oral: " + (document.getElementById("cab_muc_txt").value.trim() || "—");
+
+    const oroColor = document.getElementById("cab_oro_color").value==="normo" ? "orofaringe normocrómica" : "orofaringe hipercrómica";
+    const amig = document.getElementById("cab_amig").value==="sin" ? "sin hipertrofia" : ("con hipertrofia amigdalina grado " + (document.getElementById("cab_amig_grado").value.trim() || "—"));
+    const desc = document.getElementById("cab_desc").value;
+    const descTxt = desc==="sin_desc" ? "sin descarga posterior" :
+                    desc==="sin" ? "sin descarga posterior ni placas serosas" :
+                    "con " + (document.getElementById("cab_desc_txt").value.trim() || "—");
+
+    const extraTxt = extra ? (", " + extra) : "";
+    return `Cabeza: ${cranTxt}${extraTxt}. ${palp}. ${impl}, ${despr}, ${dolor}. ${ojos}, con ${pupTxt}. ${cond}. ${mucTxt}. ${oroColor}, ${amig}, ${descTxt}.`;
+  }
+
+  function buildCuello(){
+    const f = document.getElementById("cue_forma").value;
+    const b = document.getElementById("cue_bio").value;
+    const s = document.getElementById("cue_sim").value;
+    const find = document.getElementById("cue_find").value;
+
+    const fTxt = f==="cil" ? "Cuello cilíndrico" : f==="largo" ? "Cuello largo y estrecho" : "Cuello corto y ancho";
+    const bTxt = b==="normo" ? "normolíneo" : b==="longi" ? "longilíneo" : "brevilíneo";
+    const sTxt = s==="sim" ? "simétrico" : "asimétrico";
+    const findTxt = find==="normal" ? "sin adenomegalias palpables, sin plétora yugular ni deformidades" :
+      ("con " + (document.getElementById("cue_txt").value.trim() || "—"));
+
+    return `Cuello: ${fTxt}, ${bTxt}, ${sTxt}, ${findTxt}.`;
+  }
+
+  function buildTorax(){
+    const ritmo = document.getElementById("tor_ritmo").value==="rit" ? "rítmicos" : "arrítmicos";
+    const inten = document.getElementById("tor_int").value==="ade" ? "de adecuada intensidad" : "de intensidad disminuida";
+    const freq  = document.getElementById("tor_freq").value==="ade" ? "adecuados en frecuencia" : "alterados en frecuencia";
+
+    const sop = document.getElementById("tor_sop").value==="sin" ? "sin soplos" :
+      ("con soplo identificable en " + (document.getElementById("tor_sop_txt").value.trim() || "—"));
+
+    const amp = document.getElementById("tor_amp").value;
+    const ampTxt = amp==="ade" ? "Adecuados movimientos de amplexión y amplexación" :
+                   amp==="dis" ? "Disminución de movimientos de amplexión y amplexación" :
+                   "Aumento de movimientos de amplexión y amplexación";
+
+    const mv = document.getElementById("tor_mv").value;
+    const mvTxt = mv==="norm" ? "murmullo vesicular generalizado" : mv==="dis" ? "murmullo vesicular disminuido" : "murmullo vesicular abolido";
+
+    const fen = document.getElementById("tor_fen").value==="sin" ? "sin fenómenos agregados" :
+      ("con " + (document.getElementById("tor_fen_txt").value.trim() || "—"));
+
+    const spp = document.getElementById("tor_spp").value==="no" ? "No se integró síndrome pleuropulmonar" :
+      ("Se integra síndrome pleuropulmonar de " + (document.getElementById("tor_spp_txt").value.trim() || "—"));
+
+    return `Tórax: Precordio con ruidos cardiacos ${ritmo} ${inten} y ${freq}, ${sop}. ${ampTxt}, ${mvTxt}, ${fen}. ${spp}.`;
+  }
+
+  function buildAbdomen(){
+    const forma = document.getElementById("abd_forma").value;
+    const formaTxt = forma==="plano" ? "Abdomen plano" : forma==="pan" ? "Abdomen globoso a expensas de panículo adiposo" : "Abdomen globoso a expensas de distensión";
+    const cons = document.getElementById("abd_cons").value;
+    const depr = document.getElementById("abd_depr").value==="dep" ? "depresible" : "depresible con resistencia";
+
+    const per = document.getElementById("abd_per").value;
+    const perTxt = per==="normo" ? "peristalsis normoactiva" : per==="hipo" ? "peristalsis hipoactiva" : per==="hiper" ? "peristalsis hiperactiva" : "peristalsis ligeramente hiperactiva";
+
+    const dolor = document.getElementById("abd_dolor").value==="no" ? "no doloroso" : "doloroso";
+    const palp = document.getElementById("abd_pal").value;
+    const palpTxt = palp==="sup_prof" ? "a la palpación superficial o profunda" :
+                    palp==="sup" ? "a la palpación superficial" :
+                    palp==="prof" ? "a la palpación profunda" : "a la palpación superficial y profunda";
+
+    const loc = document.getElementById("abd_loc").value.trim();
+    const locTxt = (document.getElementById("abd_dolor").value==="si" && loc) ? (" en " + loc) : "";
+
+    const perc = document.getElementById("abd_perc").value==="timp" ? "timpánico" : "mate";
+    const irr = document.getElementById("abd_irr").value==="sin" ? "sin datos de irritación peritoneal" : "con datos de irritación peritoneal";
+
+    const signo = (label, v) => {
+      if(v==="omit") return "";
+      if(v==="neg") return `${label} negativo`;
+      if(v==="pos") return `${label} positivo`;
+      if(v==="pos_bi") return `${label} positivo bilateral`;
+      return "";
+    };
+    const mur = signo("Murphy", document.getElementById("abd_mur").value);
+    const gio = signo("Giordano", document.getElementById("abd_gio").value);
+    const mcb = signo("McBurney", document.getElementById("abd_mcb").value);
+    const signos = [mur,gio,mcb].filter(Boolean);
+    const signosTxt = signos.length ? (". " + signos.join(". ") + ".") : ".";
+
+    const extra = document.getElementById("abd_extra").value.trim();
+    const extraTxt = extra ? (" " + extra) : "";
+
+    return `Abdomen: ${formaTxt}, ${cons}, ${depr}, ${perTxt}, ${dolor} ${palpTxt}${locTxt}, ${perc} a la percusión, ${irr}${signosTxt}${extraTxt}`;
+  }
+
+  function buildExt(){
+    const seg = document.getElementById("ext_seg").value;
+    const segTxt = {
+      sup_inf: "Extremidades superiores e inferiores",
+      sup: "Extremidades superiores",
+      inf: "Extremidades inferiores",
+      sup_inf_der: "Extremidades superiores e inferior derecha",
+      sup_inf_izq: "Extremidades superiores e inferior izquierda"
+    }[seg] || "Extremidades superiores e inferiores";
+
+    const integ = document.getElementById("ext_integ").value==="integ"
+      ? "íntegras, sin alteraciones"
+      : ("con alteraciones por " + (document.getElementById("ext_integ_txt").value.trim() || "—"));
+
+    const trof = document.getElementById("ext_trof").value==="eut" ? "eutróficas" : document.getElementById("ext_trof").value==="atr" ? "atróficas" : "hipertróficas";
+    const temp = document.getElementById("ext_temp").value==="eut" ? "eutérmicas" : document.getElementById("ext_temp").value==="hipo" ? "hipotérmicas" : "hipertermicas";
+
+    const edema = document.getElementById("ext_edema").value;
+    const edemaTxt = edema==="sin" ? "sin edema" : edema==="con" ? "con edema" :
+      edema==="g1" ? "edema Godet +" : edema==="g2" ? "edema Godet ++" : edema==="g3" ? "edema Godet +++" : "edema Godet ++++";
+
+    const eri = document.getElementById("ext_eri").value==="no" ? "sin eritema" : "con eritema";
+    const vol = document.getElementById("ext_vol").value==="no" ? "sin aumento de volumen" : "con aumento de volumen";
+
+    const d = document.getElementById("ext_dolor").value;
+    const dTipo = document.getElementById("ext_dolor_tipo").value==="sup" ? "a la palpación superficial" : "a la palpación profunda";
+    const dMov = document.getElementById("ext_dolor_mov").value;
+    const dMovTxt = dMov==="mov" ? "dolor al movimiento" : dMov==="elev" ? "dolor a la elevación de la extremidad" : "";
+    const loc = document.getElementById("ext_loc").value.trim();
+
+    const dolorTxt = (d==="no") ? "sin dolor" : ("con dolor " + dTipo + (loc ? (" localizado en " + loc) : "") + (dMovTxt ? (", " + dMovTxt) : ""));
+
+    return `Extremidades: ${segTxt}: ${integ}, ${trof}, ${temp}, ${edemaTxt}, ${eri}, ${vol}, ${dolorTxt}.`;
+  }
+
+  function buildNeuro(){
+    const pick = (sel, txt, normalText) => {
+      const v = document.getElementById(sel).value;
+      if(v==="normal") return normalText;
+      if(v==="hipo") return "hipoacusia conocida, sin nistagmus";
+      return document.getElementById(txt).value.trim() || "—";
+    };
+
+    const II = "II: " + pick("n2","n2t","sin alteraciones en la agudeza visual");
+    const IIIIVVI = "III, IV, VI: " + pick("n346","n346t","movimientos oculares conservados, reflejo fotomotor y consensual conservados");
+    const V = "V: " + pick("n5","n5t","sensibilidad conservada en 3 ramas, tono y fuerza masticación conservados");
+    const VII = "VII: " + pick("n7","n7t","estática y mímica facial simétrica");
+    const VIII = "VIII: " + (document.getElementById("n8").value==="otro" ? (document.getElementById("n8t").value.trim() || "—") : pick("n8","n8t","audición conservada, sin nistagmus"));
+    const IX_X = "IX y X: " + pick("n9","n9t","úvula central, reflejo nauseoso presente");
+    const XI = "XI: " + pick("n11","n11t","adecuado tono y fuerza de ECM y trapecios");
+    const XII = "XII: " + pick("n12","n12t","movimientos linguales conservados en todas las direcciones");
+
+    const sens = "Sensibilidad " + pick("nsens","nsenst","conservada");
+    const ref = "Reflejos " + pick("nref","nreft","normales");
+    const coord = pick("ncoord","ncoordt","sin dismetrías ni diadococinesias");
+    const men = pick("nmen","nment","sin datos de meningismo");
+    const marcha = "Marcha " + pick("nmarch","nmarcht","sin ataxia");
+
+    return `Exploración neurológica: Nervios craneales: I: diferido. ${II}. ${IIIIVVI}. ${V}. ${VII}. ${VIII}. ${IX_X}. ${XI}. ${XII}. ${sens}. ${ref}. ${coord}. ${men}. ${marcha}.`;
+  }
+
+  function renderAll(){
+    // Orientación: si no orientado o no valorable, deshabilita checkboxes
+    const modo = document.getElementById("hab_ori_modo").value;
+    const checks = document.getElementById("hab_ori_checks");
+    const disable = (modo==="4" || modo==="0" || modo==="nv");
+    checks.querySelectorAll("input").forEach(cb => cb.disabled = disable);
+
+    document.getElementById("hab_out").textContent = buildHabitus();
+    document.getElementById("cab_out").textContent = buildCabeza();
+    document.getElementById("cue_out").textContent = buildCuello();
+    document.getElementById("tor_out").textContent = buildTorax();
+    document.getElementById("abd_out").textContent = buildAbdomen();
+    document.getElementById("ext_out").textContent = buildExt();
+    document.getElementById("neu_out").textContent = buildNeuro();
+  }
+
+  // ===== Presets =====
+  function habitusNormal(){
+    document.getElementById("hab_edad").value="similar";
+    document.getElementById("hab_alerta").value="alerta";
+    document.getElementById("hab_conc").value="despierto";
+    document.getElementById("hab_ori_modo").value="4";
+    document.querySelectorAll(".hab_ori").forEach(x=>x.checked=true);
+    document.getElementById("hab_pos").value="decubito_supino";
+    document.getElementById("hab_coop").value="cooperador";
+    document.getElementById("hab_facies").value="";
+    document.getElementById("hab_integ").value="integro";
+    document.getElementById("hab_integ_txt").value="";
+    document.getElementById("hab_conf").value="bien";
+    document.getElementById("hab_conf_txt").value="";
+    document.getElementById("hab_comp").value="media";
+    document.getElementById("hab_sheldon").value="meso";
+    document.getElementById("hab_olores").value="";
+    document.getElementById("hab_mov").value="";
+    document.getElementById("hab_marcha").value="";
+    document.getElementById("hab_disp").value="";
+  }
+
+  function cabezaNormal(){
+    document.getElementById("cab_craneo").value="normoc";
+    document.getElementById("cab_extra").value="";
+    document.getElementById("cab_palp").value="normal";
+    document.getElementById("cab_palp_txt").value="";
+    document.getElementById("cab_impl").value="buena";
+    document.getElementById("cab_despr").value="dif";
+    document.getElementById("cab_dolor").value="no";
+    document.getElementById("cab_dolor_txt").value="";
+    document.getElementById("cab_ojos").value="sim";
+    document.getElementById("cab_ojos_txt").value="";
+    document.getElementById("cab_pup").value="iso_normo";
+    document.getElementById("cab_pup_txt").value="";
+    document.getElementById("cab_cond").value="per";
+    document.getElementById("cab_cond_txt").value="";
+    document.getElementById("cab_muc").value="bien";
+    document.getElementById("cab_muc_txt").value="";
+    document.getElementById("cab_oro_color").value="normo";
+    document.getElementById("cab_amig").value="sin";
+    document.getElementById("cab_amig_grado").value="";
+    document.getElementById("cab_desc").value="sin_desc";
+    document.getElementById("cab_desc_txt").value="";
+  }
+
+  function cuelloNormal(){
+    document.getElementById("cue_forma").value="cil";
+    document.getElementById("cue_bio").value="normo";
+    document.getElementById("cue_sim").value="sim";
+    document.getElementById("cue_find").value="normal";
+    document.getElementById("cue_txt").value="";
+  }
+
+  function toraxNormal(){
+    document.getElementById("tor_ritmo").value="rit";
+    document.getElementById("tor_int").value="ade";
+    document.getElementById("tor_freq").value="ade";
+    document.getElementById("tor_sop").value="sin";
+    document.getElementById("tor_sop_txt").value="";
+    document.getElementById("tor_amp").value="ade";
+    document.getElementById("tor_mv").value="norm";
+    document.getElementById("tor_fen").value="sin";
+    document.getElementById("tor_fen_txt").value="";
+    document.getElementById("tor_spp").value="no";
+    document.getElementById("tor_spp_txt").value="";
+  }
+  function toraxCond(){
+    toraxNormal();
+    document.getElementById("tor_amp").value="dis";
+    document.getElementById("tor_mv").value="dis";
+    document.getElementById("tor_fen").value="con";
+    document.getElementById("tor_fen_txt").value="estertores (especificar localización si aplica)";
+    document.getElementById("tor_spp").value="si";
+    document.getElementById("tor_spp_txt").value="condensación";
+  }
+  function toraxAbol(){
+    toraxNormal();
+    document.getElementById("tor_amp").value="dis";
+    document.getElementById("tor_mv").value="abol";
+    document.getElementById("tor_fen").value="sin";
+    document.getElementById("tor_spp").value="si";
+    document.getElementById("tor_spp_txt").value="atelectasia/derrame pleural/neumotórax (especificar)";
+  }
+
+  function abdomenNormal(){
+    document.getElementById("abd_forma").value="plano";
+    document.getElementById("abd_cons").value="blando";
+    document.getElementById("abd_depr").value="dep";
+    document.getElementById("abd_per").value="normo";
+    document.getElementById("abd_dolor").value="no";
+    document.getElementById("abd_pal").value="sup_prof";
+    document.getElementById("abd_loc").value="";
+    document.getElementById("abd_perc").value="timp";
+    document.getElementById("abd_irr").value="sin";
+    document.getElementById("abd_mur").value="neg";
+    document.getElementById("abd_gio").value="neg";
+    document.getElementById("abd_mcb").value="neg";
+    document.getElementById("abd_extra").value="";
+  }
+  function abdColost(){
+    abdomenNormal();
+    document.getElementById("abd_extra").value="Con presencia de colostomía por ileostomía y herida quirúrgica sobre (especificar).";
+  }
+  function abdAp(){
+    abdomenNormal();
+    document.getElementById("abd_forma").value="dist";
+    document.getElementById("abd_cons").value="distendido";
+    document.getElementById("abd_per").value="hipo";
+    document.getElementById("abd_dolor").value="si";
+    document.getElementById("abd_pal").value="prof";
+    document.getElementById("abd_loc").value="fosa ilíaca derecha";
+    document.getElementById("abd_mcb").value="pos";
+    document.getElementById("abd_extra").value="Signo obturador positivo.";
+  }
+  function abdCol(){
+    abdomenNormal();
+    document.getElementById("abd_forma").value="pan";
+    document.getElementById("abd_dolor").value="si";
+    document.getElementById("abd_pal").value="prof";
+    document.getElementById("abd_loc").value="hipocondrio derecho";
+    document.getElementById("abd_mur").value="pos";
+  }
+  function abdDiv(){
+    abdomenNormal();
+    document.getElementById("abd_forma").value="dist";
+    document.getElementById("abd_cons").value="distendido";
+    document.getElementById("abd_per").value="hiper";
+    document.getElementById("abd_dolor").value="si";
+    document.getElementById("abd_pal").value="prof";
+    document.getElementById("abd_loc").value="flanco izquierdo y fosa ilíaca izquierda";
+    document.getElementById("abd_extra").value="Signo de Rovsing positivo.";
+  }
+
+  function extNormal(){
+    document.getElementById("ext_seg").value="sup_inf";
+    document.getElementById("ext_integ").value="integ";
+    document.getElementById("ext_integ_txt").value="";
+    document.getElementById("ext_trof").value="eut";
+    document.getElementById("ext_temp").value="eut";
+    document.getElementById("ext_edema").value="sin";
+    document.getElementById("ext_eri").value="no";
+    document.getElementById("ext_vol").value="no";
+    document.getElementById("ext_dolor").value="no";
+    document.getElementById("ext_dolor_tipo").value="sup";
+    document.getElementById("ext_dolor_mov").value="omit";
+    document.getElementById("ext_loc").value="";
+  }
+
+  function neuroNormal(){
+    const set = (id,val)=>document.getElementById(id).value=val;
+    const clr = (id)=>document.getElementById(id).value="";
+    set("n2","normal"); clr("n2t");
+    set("n346","normal"); clr("n346t");
+    set("n5","normal"); clr("n5t");
+    set("n7","normal"); clr("n7t");
+    set("n8","normal"); clr("n8t");
+    set("n9","normal"); clr("n9t");
+    set("n11","normal"); clr("n11t");
+    set("n12","normal"); clr("n12t");
+    set("nsens","normal"); clr("nsenst");
+    set("nref","normal"); clr("nreft");
+    set("ncoord","normal"); clr("ncoordt");
+    set("nmen","normal"); clr("nment");
+    set("nmarch","normal"); clr("nmarcht");
+  }
+
+  function normalGlobal(){
+    habitusNormal(); cabezaNormal(); cuelloNormal(); toraxNormal(); abdomenNormal(); extNormal(); neuroNormal();
+    renderAll();
+    toast("Normal global aplicado ✅");
+  }
+
+  function copiarTodoEF(){
+    const all = [
+      document.getElementById("hab_out").textContent,
+      document.getElementById("cab_out").textContent,
+      document.getElementById("cue_out").textContent,
+      document.getElementById("tor_out").textContent,
+      document.getElementById("abd_out").textContent,
+      document.getElementById("ext_out").textContent,
+      document.getElementById("neu_out").textContent
+    ].join("\n");
+    navigator.clipboard.writeText(all).then(()=>toast("Todo EF copiado ✅")).catch(()=>toast("No se pudo copiar"));
+  }
+
+  // ===== Events =====
+  document.querySelectorAll("select,input,textarea").forEach(el => el.addEventListener("input", renderAll));
+  document.getElementById("sexo").addEventListener("change", renderAll);
+
+  // Habitus
+  document.getElementById("hab_normal").addEventListener("click", ()=>{habitusNormal(); renderAll();});
+  document.getElementById("hab_clear").addEventListener("click", ()=>{habitusNormal(); document.getElementById("hab_facies").value=""; document.getElementById("hab_disp").value=""; renderAll();});
+
+  // Cabeza
+  document.getElementById("cab_normal").addEventListener("click", ()=>{cabezaNormal(); renderAll();});
+  document.getElementById("cab_clear").addEventListener("click", ()=>{cabezaNormal(); renderAll();});
+
+  // Cuello
+  document.getElementById("cue_normal").addEventListener("click", ()=>{cuelloNormal(); renderAll();});
+  document.getElementById("cue_clear").addEventListener("click", ()=>{cuelloNormal(); renderAll();});
+
+  // Tórax presets
+  document.getElementById("tor_normal").addEventListener("click", ()=>{toraxNormal(); renderAll();});
+  document.getElementById("tor_cond").addEventListener("click", ()=>{toraxCond(); renderAll();});
+  document.getElementById("tor_abol").addEventListener("click", ()=>{toraxAbol(); renderAll();});
+
+  // Abdomen presets
+  document.getElementById("abd_normal").addEventListener("click", ()=>{abdomenNormal(); renderAll();});
+  document.getElementById("abd_colost").addEventListener("click", ()=>{abdColost(); renderAll();});
+  document.getElementById("abd_ap").addEventListener("click", ()=>{abdAp(); renderAll();});
+  document.getElementById("abd_col").addEventListener("click", ()=>{abdCol(); renderAll();});
+  document.getElementById("abd_div").addEventListener("click", ()=>{abdDiv(); renderAll();});
+
+  // Extremidades
+  document.getElementById("ext_normal").addEventListener("click", ()=>{extNormal(); renderAll();});
+  document.getElementById("ext_clear").addEventListener("click", ()=>{extNormal(); renderAll();});
+
+  // Neuro
+  document.getElementById("neu_normal").addEventListener("click", ()=>{neuroNormal(); renderAll();});
+  document.getElementById("neu_clear").addEventListener("click", ()=>{neuroNormal(); renderAll();});
+
+  // Global
+  document.getElementById("btnNormalGlobal").addEventListener("click", normalGlobal);
+  document.getElementById("btnCopiarTodo").addEventListener("click", copiarTodoEF);
+  document.getElementById("btnReset").addEventListener("click", ()=>{document.getElementById("sexo").value="M"; normalGlobal(); toast("Reset ✅");});
+
+  // Init
+  normalGlobal();
+</script>
+</body>
+</html>
